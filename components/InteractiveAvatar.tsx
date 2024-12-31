@@ -6,18 +6,12 @@ import StreamingAvatar, {
   TaskType,
   VoiceEmotion,
 } from "@heygen/streaming-avatar";
-import {
-  Button,
-  Card,
-  CardBody,
-  Spinner,
-} from "@nextui-org/react";
+import { Button, Card, CardBody, Spinner } from "@nextui-org/react";
 import { useEffect, useRef, useState } from "react";
 import { useMemoizedFn, usePrevious } from "ahooks";
 
 import InteractiveAvatarTextInput from "./InteractiveAvatarTextInput";
 import type { Session } from "@/types/session";
-
 
 interface SessionResponse {
   code: number;
@@ -37,7 +31,7 @@ export default function InteractiveAvatar() {
   const [language] = useState<string>("uk");
   const [text, setText] = useState<string>("");
   const [hasStartedPlaying, setHasStartedPlaying] = useState(false);
-  
+
   const mediaStream = useRef<HTMLVideoElement>(null);
   const avatar = useRef<StreamingAvatar | null>(null);
   const [chatMode, setChatMode] = useState("text_mode");
@@ -47,51 +41,54 @@ export default function InteractiveAvatar() {
     const response = await fetch("/api/get-access-token", {
       method: "POST",
     });
-    
+
     if (!response.ok) {
       throw new Error(`Failed to fetch access token: ${response.status}`);
     }
-    
+
     const token = await response.text();
     return token;
   }
 
   async function listSessions(): Promise<Session[]> {
-    const response = await fetch('/api/list-sessions');
-    
+    const response = await fetch("/api/list-sessions");
+
     if (!response.ok) {
       throw new Error(`Failed to list sessions: ${response.status}`);
     }
-    
+
     const data: SessionResponse = await response.json();
     return data.data?.sessions || [];
   }
 
-
   async function startSession() {
     setIsLoadingSession(true);
     setDebug("Starting session...");
-    
+
     try {
       // First close any existing sessions
       const currentSessions = await listSessions();
-      
+
       if (currentSessions.length > 0) {
         setDebug(`Closing ${currentSessions.length} existing sessions...`);
-        
-        await Promise.all(currentSessions.map(async (session) => {
-          const closeResponse = await fetch('/api/stop-session', {
-            method: 'POST',
-            headers: {
-              'content-type': 'application/json',
-            },
-            body: JSON.stringify({ session_id: session.session_id })
-          });
-          
-          if (!closeResponse.ok) {
-            throw new Error(`Failed to close session ${session.session_id}: ${closeResponse.status}`);
-          }
-        }));
+
+        await Promise.all(
+          currentSessions.map(async (session) => {
+            const closeResponse = await fetch("/api/stop-session", {
+              method: "POST",
+              headers: {
+                "content-type": "application/json",
+              },
+              body: JSON.stringify({ session_id: session.session_id }),
+            });
+
+            if (!closeResponse.ok) {
+              throw new Error(
+                `Failed to close session ${session.session_id}: ${closeResponse.status}`
+              );
+            }
+          })
+        );
       }
 
       // Get a fresh token for the new session
@@ -101,20 +98,20 @@ export default function InteractiveAvatar() {
       }
 
       avatar.current = new StreamingAvatar({ token });
-      
+
       avatar.current.on(StreamingEvents.AVATAR_START_TALKING, (e) => {
         console.log("Avatar started talking", e);
       });
-      
+
       avatar.current.on(StreamingEvents.AVATAR_STOP_TALKING, (e) => {
         console.log("Avatar stopped talking", e);
       });
-      
+
       avatar.current.on(StreamingEvents.STREAM_DISCONNECTED, () => {
         console.log("Stream disconnected");
         endSession();
       });
-      
+
       avatar.current?.on(StreamingEvents.STREAM_READY, (event) => {
         console.log(">>>>> Stream ready:", event.detail);
         setStream(event.detail);
@@ -159,10 +156,11 @@ export default function InteractiveAvatar() {
         taskType: TaskType.TALK,
         taskMode: TaskMode.SYNC,
       });
-      
+
       setDebug("Speech completed");
     } catch (e) {
-      const errorMessage = e instanceof Error ? e.message : "Unknown error occurred";
+      const errorMessage =
+        e instanceof Error ? e.message : "Unknown error occurred";
       setDebug(`Error: ${errorMessage}`);
       console.error("Speech error:", e);
     } finally {
@@ -174,7 +172,6 @@ export default function InteractiveAvatar() {
     await avatar.current?.stopAvatar();
     setStream(undefined);
   }
-
 
   const previousText = usePrevious(text);
 
@@ -238,17 +235,17 @@ export default function InteractiveAvatar() {
                     <track kind="captions" />
                   </video>
                   {hasStartedPlaying && (
-                    <div 
+                    <div
                       style={{
-                        position: 'absolute',
+                        position: "absolute",
                         bottom: 0,
                         right: 54,
-                        width: '150px',
-                        height: '40px',
-                        backgroundColor: 'rgba(255, 255, 255, 0.5)',
-                        backdropFilter: 'blur(8px)',
-                        WebkitBackdropFilter: 'blur(8px)',
-                        zIndex: 10
+                        width: "150px",
+                        height: "40px",
+                        backgroundColor: "rgba(255, 255, 255, 0.5)",
+                        backdropFilter: "blur(8px)",
+                        WebkitBackdropFilter: "blur(8px)",
+                        zIndex: 10,
                       }}
                     />
                   )}
@@ -261,7 +258,7 @@ export default function InteractiveAvatar() {
                     onClick={handlePlayVideoClick}
                     disabled={isLoadingSession}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
+                      if (e.key === "Enter" || e.key === " ") {
                         handlePlayVideoClick();
                       }
                     }}
@@ -273,8 +270,8 @@ export default function InteractiveAvatar() {
                       width: "800px",
                       height: "430px",
                       opacity: isLoadingSession ? 0.5 : 1,
-                      cursor: isLoadingSession ? 'default' : 'pointer',
-                      display: 'block',
+                      cursor: isLoadingSession ? "default" : "pointer",
+                      display: "block",
                     }}
                   >
                     <span className="sr-only">Play Video</span>
@@ -288,12 +285,11 @@ export default function InteractiveAvatar() {
                 className="cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 transition-opacity duration-300"
                 onClick={startSession}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
+                  if (e.key === "Enter" || e.key === " ") {
                     startSession();
                   }
                 }}
                 style={{
-                  
                   backgroundImage: "url('/therapist.png')",
                   backgroundSize: "cover",
                   height: "430px",
@@ -315,11 +311,7 @@ export default function InteractiveAvatar() {
           />
         </CardBody>
       </Card>
-      <p className="font-mono text-right">
-        <span className="font-bold">Console:</span>
-        <br />
-        {debug}
-      </p>
     </div>
   );
+  עןא;
 }
