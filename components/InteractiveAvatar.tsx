@@ -66,8 +66,8 @@ export default function InteractiveAvatar() {
     setDebug("Starting session...");
 
     try {
-      // First close any existing sessions
-      const currentSessions = await listSessions();
+      // Comment out session management for now
+      /* const currentSessions = await listSessions();
 
       if (currentSessions.length > 0) {
         setDebug(`Closing ${currentSessions.length} existing sessions...`);
@@ -89,7 +89,7 @@ export default function InteractiveAvatar() {
             }
           })
         );
-      }
+      } */
 
       // Get a fresh token for the new session
       const token = await fetchAccessToken();
