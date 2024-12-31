@@ -66,37 +66,13 @@ export default function InteractiveAvatar() {
     setDebug("Starting session...");
 
     try {
-      // Comment out session management for now
-      /* const currentSessions = await listSessions();
-
-      if (currentSessions.length > 0) {
-        setDebug(`Closing ${currentSessions.length} existing sessions...`);
-
-        await Promise.all(
-          currentSessions.map(async (session) => {
-            const closeResponse = await fetch("/api/stop-session", {
-              method: "POST",
-              headers: {
-                "content-type": "application/json",
-              },
-              body: JSON.stringify({ session_id: session.session_id }),
-            });
-
-            if (!closeResponse.ok) {
-              throw new Error(
-                `Failed to close session ${session.session_id}: ${closeResponse.status}`
-              );
-            }
-          })
-        );
-      } */
-
-      // Get a fresh token for the new session
       const token = await fetchAccessToken();
       if (!token) {
         throw new Error("Failed to obtain access token");
       }
 
+      console.log("Token obtained successfully"); // Debug log
+      
       avatar.current = new StreamingAvatar({ token });
 
       avatar.current.on(StreamingEvents.AVATAR_START_TALKING, (e) => {
@@ -117,6 +93,18 @@ export default function InteractiveAvatar() {
         setStream(event.detail);
       });
 
+      avatar.current.on(StreamingEvents.STREAM_ERROR, (error) => {
+        console.error("Stream error:", error);
+        setDebug(`Stream error: ${error}`);
+      });
+
+      console.log("Attempting to create avatar with params:", { // Debug log
+        quality: AvatarQuality.Medium,
+        avatarName: avatarId,
+        knowledgeId: knowledgeId,
+        language: language
+      });
+
       await avatar.current.createStartAvatar({
         quality: AvatarQuality.Medium,
         avatarName: avatarId,
@@ -131,8 +119,10 @@ export default function InteractiveAvatar() {
 
       setChatMode("text_mode");
     } catch (error) {
-      console.error("Error starting avatar session:", error);
-      setDebug("An error occurred while starting the session.");
+      console.error("Detailed error starting avatar session:", error);
+      setDebug(error instanceof Error ? error.message : "Unknown error occurred");
+      // Clean up on error
+      avatar.current = null;
     } finally {
       setIsLoadingSession(false);
     }
