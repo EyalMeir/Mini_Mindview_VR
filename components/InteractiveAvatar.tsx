@@ -313,5 +313,4 @@ export default function InteractiveAvatar() {
       </Card>
     </div>
   );
-  עןא;
 }
