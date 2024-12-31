@@ -237,15 +237,15 @@ export default function InteractiveAvatar() {
                   {hasStartedPlaying && (
                     <div
                       style={{
-                        position: "absolute",
-                        bottom: 0,
+                        position: 'absolute',
+                        bottom: -1,
                         right: 54,
-                        width: "150px",
-                        height: "40px",
-                        backgroundColor: "rgba(255, 255, 255, 0.5)",
-                        backdropFilter: "blur(8px)",
-                        WebkitBackdropFilter: "blur(8px)",
-                        zIndex: 10,
+                        width: '900px',
+                        height: '40px',
+                        backgroundColor: 'rgba(24, 24, 27, 1)',
+                        backdropFilter: 'blur(8px)',
+                        WebkitBackdropFilter: 'blur(8px)',
+                        zIndex: 10
                       }}
                     />
                   )}
