@@ -28,7 +28,7 @@ export default function InteractiveAvatar() {
   const [debug, setDebug] = useState<string>();
   const [knowledgeId] = useState<string>("b6ad717dc8cd472dafe383e9c793e14c");
   const [avatarId] = useState<string>("Ann_Therapist_public");
-  const [language] = useState<string>("uk");
+  const [language] = useState<string>("en");
   const [text, setText] = useState<string>("");
   const [hasStartedPlaying, setHasStartedPlaying] = useState(false);
 
