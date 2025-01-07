@@ -93,10 +93,6 @@ export default function InteractiveAvatar() {
         setStream(event.detail);
       });
 
-      avatar.current.on(StreamingEvents.STREAM_ERROR, (error) => {
-        console.error("Stream error:", error);
-        setDebug(`Stream error: ${error}`);
-      });
 
       console.log("Attempting to create avatar with params:", { // Debug log
         quality: AvatarQuality.Medium,
