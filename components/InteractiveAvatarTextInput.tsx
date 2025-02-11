@@ -24,30 +24,50 @@ export default function InteractiveAvatarTextInput({
   disabled = true,
   loading = false,
 }: StreamingAvatarTextInputProps) {
+  // Function to handle Unity's interaction
   useEffect(() => {
     if (typeof window !== "undefined") {
-      // Simple direct submission method
-      (window as any).submitText = function(text: string) {
-        console.log("Directly submitting text:", text);
-        setInput(text);
-        onSubmit();
+      // Unity function to set the input text
+      (window as any).setTranscriptionInput = function (text: string) {
+        const inputField = document.getElementById(
+          "transcription",
+        ) as HTMLInputElement;
+        if (inputField) {
+          console.log(`Setting input text to: ${text}`);
+          setInput(text); // Update React state
+          inputField.value = text; // Update DOM input field value
+          const event = new Event("input", { bubbles: true });
+          inputField.dispatchEvent(event); // Trigger React's state update
+          console.log("Input text set successfully!");
+        } else {
+          console.error("Input field with ID 'transcription' not found!");
+        }
+      };
+
+      // Unity function to trigger the submit
+      (window as any).triggerSubmit = function () {
+        const inputField = document.getElementById(
+          "transcription",
+        ) as HTMLInputElement;
+        if (inputField && inputField.value.trim() !== "") {
+          console.log("Triggering handleSubmit...");
+          handleSubmit(); // Call handleSubmit if the input is valid
+        } else {
+          console.warn("Cannot submit: Input field is empty or not found.");
+        }
       };
     }
+  }, [setInput, input]);
 
-    return () => {
-      if (typeof window !== "undefined") {
-        (window as any).submitText = undefined;
-      }
-    };
-  }, [setInput, onSubmit]);
-
+  // Handle the submission of the form
   function handleSubmit() {
     if (input.trim() === "") {
       console.warn("Input is empty. Submission canceled.");
       return;
     }
     console.log(`Submitting input: ${input}`);
-    onSubmit();
+    onSubmit(); // Trigger the parent's submit handler
+    setInput(""); // Clear the input after submission
   }
 
   return (
