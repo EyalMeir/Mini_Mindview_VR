@@ -1,7 +1,7 @@
 import { Input, Spinner, Tooltip } from "@nextui-org/react";
 import { PaperPlaneRight } from "@phosphor-icons/react";
 import clsx from "clsx";
-import { useEffect, useCallback } from "react";
+import { useEffect } from "react";
 
 interface StreamingAvatarTextInputProps {
   label: string;
@@ -24,70 +24,74 @@ export default function InteractiveAvatarTextInput({
   disabled = true,
   loading = false,
 }: StreamingAvatarTextInputProps) {
-  // Memoize the handleSubmit function
-  const handleSubmit = useCallback(() => {
-    if (input.trim() === "") {
-      console.warn("Input is empty. Submission canceled.");
-      return;
-    }
-    console.log(`Submitting input: ${input}`);
-    onSubmit(); // Trigger the parent's submit handler
-    setInput(""); // Clear the input after submission
-  }, [input, onSubmit, setInput]);
-
-  // Function to handle Unity's interaction
   useEffect(() => {
     if (typeof window !== "undefined") {
-      // Unity function to set the input text
+      // Combine both operations into one function
+      (window as any).setTranscriptionAndSubmit = function (text: string) {
+        const inputField = document.getElementById(
+          "transcription",
+        ) as HTMLInputElement;
+        if (inputField) {
+          console.log(`Setting input text to: ${text}`);
+          
+          // Set the input value
+          setInput(text);
+          inputField.value = text;
+          
+          // Trigger React's state update
+          const event = new Event("input", { bubbles: true });
+          inputField.dispatchEvent(event);
+          
+          // Wait for state to update before submitting
+          setTimeout(() => {
+            console.log("Submitting with text:", text);
+            onSubmit();
+          }, 100);
+        }
+      };
+
+      // Keep these separate functions for backwards compatibility
       (window as any).setTranscriptionInput = function (text: string) {
         const inputField = document.getElementById(
           "transcription",
         ) as HTMLInputElement;
         if (inputField) {
           console.log(`Setting input text to: ${text}`);
-          setInput(text); // Update React state
-          inputField.value = text; // Update DOM input field value
+          setInput(text);
+          inputField.value = text;
           const event = new Event("input", { bubbles: true });
-          inputField.dispatchEvent(event); // Trigger React's state update
+          inputField.dispatchEvent(event);
           console.log("Input text set successfully!");
-        } else {
-          console.error("Input field with ID 'transcription' not found!");
         }
       };
 
-      // Unity function to trigger the submit
       (window as any).triggerSubmit = function () {
-        // Add a small delay to ensure state is updated
-        setTimeout(() => {
-          const inputField = document.getElementById(
-            "transcription",
-          ) as HTMLInputElement;
-          if (inputField) {
-            console.log("triggerSubmit called");
-            console.log("Input field value:", inputField.value);
-            console.log("React input state:", input);
-            
-            // Use the input field value directly
-            if (input && input.trim() !== "") {
-              console.log("Triggering submit with input:", input);
-              onSubmit();
-            } else {
-              console.warn("Cannot submit: Input is empty.");
-            }
-          } else {
-            console.warn("Cannot submit: Input field not found.");
-          }
-        }, 100); // Small delay to ensure state is updated
+        if (input && input.trim() !== "") {
+          console.log("Triggering submit with input:", input);
+          onSubmit();
+        } else {
+          console.warn("Cannot submit: Input is empty.");
+        }
       };
     }
 
     return () => {
       if (typeof window !== "undefined") {
+        (window as any).setTranscriptionAndSubmit = undefined;
         (window as any).setTranscriptionInput = undefined;
         (window as any).triggerSubmit = undefined;
       }
     };
-  }, [onSubmit, setInput]); // Remove input from dependencies
+  }, [setInput, onSubmit, input]);
+
+  function handleSubmit() {
+    if (input.trim() === "") {
+      console.warn("Input is empty. Submission canceled.");
+      return;
+    }
+    console.log(`Submitting input: ${input}`);
+    onSubmit();
+  }
 
   return (
     <Input
