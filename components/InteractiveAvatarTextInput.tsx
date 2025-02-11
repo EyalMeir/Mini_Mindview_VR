@@ -26,63 +26,20 @@ export default function InteractiveAvatarTextInput({
 }: StreamingAvatarTextInputProps) {
   useEffect(() => {
     if (typeof window !== "undefined") {
-      // Combine both operations into one function
-      (window as any).setTranscriptionAndSubmit = function (text: string) {
-        const inputField = document.getElementById(
-          "transcription",
-        ) as HTMLInputElement;
-        if (inputField) {
-          console.log(`Setting input text to: ${text}`);
-          
-          // Set the input value
-          setInput(text);
-          inputField.value = text;
-          
-          // Trigger React's state update
-          const event = new Event("input", { bubbles: true });
-          inputField.dispatchEvent(event);
-          
-          // Wait for state to update before submitting
-          setTimeout(() => {
-            console.log("Submitting with text:", text);
-            onSubmit();
-          }, 100);
-        }
-      };
-
-      // Keep these separate functions for backwards compatibility
-      (window as any).setTranscriptionInput = function (text: string) {
-        const inputField = document.getElementById(
-          "transcription",
-        ) as HTMLInputElement;
-        if (inputField) {
-          console.log(`Setting input text to: ${text}`);
-          setInput(text);
-          inputField.value = text;
-          const event = new Event("input", { bubbles: true });
-          inputField.dispatchEvent(event);
-          console.log("Input text set successfully!");
-        }
-      };
-
-      (window as any).triggerSubmit = function () {
-        if (input && input.trim() !== "") {
-          console.log("Triggering submit with input:", input);
-          onSubmit();
-        } else {
-          console.warn("Cannot submit: Input is empty.");
-        }
+      // Simple direct submission method
+      (window as any).submitText = function(text: string) {
+        console.log("Directly submitting text:", text);
+        setInput(text);
+        onSubmit();
       };
     }
 
     return () => {
       if (typeof window !== "undefined") {
-        (window as any).setTranscriptionAndSubmit = undefined;
-        (window as any).setTranscriptionInput = undefined;
-        (window as any).triggerSubmit = undefined;
+        (window as any).submitText = undefined;
       }
     };
-  }, [setInput, onSubmit, input]);
+  }, [setInput, onSubmit]);
 
   function handleSubmit() {
     if (input.trim() === "") {
