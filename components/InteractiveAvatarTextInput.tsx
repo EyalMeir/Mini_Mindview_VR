@@ -44,16 +44,22 @@ export default function InteractiveAvatarTextInput({
         }
       };
 
-      // Unity function to trigger the submit
       (window as any).triggerSubmit = function () {
         const inputField = document.getElementById(
           "transcription",
         ) as HTMLInputElement;
-        if (inputField && inputField.value.trim() !== "") {
-          console.log("Triggering handleSubmit...");
-          handleSubmit(); // Call handleSubmit if the input is valid
+        if (inputField) {
+          console.log("triggerSubmit called");
+          console.log("Input field value:", inputField.value);
+          console.log("React input state:", input);  // Add this line
+          if (inputField.value.trim() !== "") {
+            console.log("Triggering submit...");
+            onSubmit();
+          } else {
+            console.warn("Cannot submit: Input field is empty.");
+          }
         } else {
-          console.warn("Cannot submit: Input field is empty or not found.");
+          console.warn("Cannot submit: Input field not found.");
         }
       };
     }
