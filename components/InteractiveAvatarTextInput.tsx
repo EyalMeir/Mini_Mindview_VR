@@ -67,7 +67,7 @@ export default function InteractiveAvatarTextInput({
     }
     console.log(`Submitting input: ${input}`);
     onSubmit(); // Trigger the parent's submit handler
-    setInput(""); // Clear the input after submission
+    //setInput(""); // Clear the input after submission
   }
 
   return (
