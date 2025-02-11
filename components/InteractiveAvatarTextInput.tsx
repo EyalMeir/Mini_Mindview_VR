@@ -1,7 +1,7 @@
 import { Input, Spinner, Tooltip } from "@nextui-org/react";
 import { PaperPlaneRight } from "@phosphor-icons/react";
 import clsx from "clsx";
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 
 interface StreamingAvatarTextInputProps {
   label: string;
@@ -24,6 +24,17 @@ export default function InteractiveAvatarTextInput({
   disabled = true,
   loading = false,
 }: StreamingAvatarTextInputProps) {
+  // Memoize the handleSubmit function
+  const handleSubmit = useCallback(() => {
+    if (input.trim() === "") {
+      console.warn("Input is empty. Submission canceled.");
+      return;
+    }
+    console.log(`Submitting input: ${input}`);
+    onSubmit(); // Trigger the parent's submit handler
+    setInput(""); // Clear the input after submission
+  }, [input, onSubmit, setInput]);
+
   // Function to handle Unity's interaction
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -44,37 +55,39 @@ export default function InteractiveAvatarTextInput({
         }
       };
 
+      // Unity function to trigger the submit
       (window as any).triggerSubmit = function () {
-        const inputField = document.getElementById(
-          "transcription",
-        ) as HTMLInputElement;
-        if (inputField) {
-          console.log("triggerSubmit called");
-          console.log("Input field value:", inputField.value);
-          console.log("React input state:", input);  // Add this line
-          if (inputField.value.trim() !== "") {
-            console.log("Triggering submit...");
-            onSubmit();
+        // Add a small delay to ensure state is updated
+        setTimeout(() => {
+          const inputField = document.getElementById(
+            "transcription",
+          ) as HTMLInputElement;
+          if (inputField) {
+            console.log("triggerSubmit called");
+            console.log("Input field value:", inputField.value);
+            console.log("React input state:", input);
+            
+            // Use the input field value directly
+            if (input && input.trim() !== "") {
+              console.log("Triggering submit with input:", input);
+              onSubmit();
+            } else {
+              console.warn("Cannot submit: Input is empty.");
+            }
           } else {
-            console.warn("Cannot submit: Input field is empty.");
+            console.warn("Cannot submit: Input field not found.");
           }
-        } else {
-          console.warn("Cannot submit: Input field not found.");
-        }
+        }, 100); // Small delay to ensure state is updated
       };
     }
-  }, [setInput, input]);
 
-  // Handle the submission of the form
-  function handleSubmit() {
-    if (input.trim() === "") {
-      console.warn("Input is empty. Submission canceled.");
-      return;
-    }
-    console.log(`Submitting input: ${input}`);
-    onSubmit(); // Trigger the parent's submit handler
-    setInput(""); // Clear the input after submission
-  }
+    return () => {
+      if (typeof window !== "undefined") {
+        (window as any).setTranscriptionInput = undefined;
+        (window as any).triggerSubmit = undefined;
+      }
+    };
+  }, [onSubmit, setInput]); // Remove input from dependencies
 
   return (
     <Input
