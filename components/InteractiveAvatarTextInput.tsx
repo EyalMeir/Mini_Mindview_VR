@@ -7,7 +7,7 @@ interface StreamingAvatarTextInputProps {
   label: string;
   placeholder: string;
   input: string;
-  onSubmit: () => void;
+  onSubmit: (text?: string) => void;  // Modified to accept a text parameter
   setInput: (value: string) => void;
   endContent?: React.ReactNode;
   disabled?: boolean;
@@ -26,53 +26,41 @@ export default function InteractiveAvatarTextInput({
 }: StreamingAvatarTextInputProps) {
   const inputRef = useRef<string>("");
 
-  // Function to handle Unity's interaction
   useEffect(() => {
     if (typeof window !== "undefined") {
-      // Unity function to set the input text
       (window as any).setTranscriptionInput = function (text: string) {
         const inputField = document.getElementById(
           "transcription",
         ) as HTMLInputElement;
         if (inputField) {
           console.log(`Setting input text to: ${text}`);
-          inputRef.current = text; // Store the value in ref
-          setInput(text); // Update React state
-          inputField.value = text; // Update DOM input field value
+          inputRef.current = text;
+          setInput(text);
+          inputField.value = text;
           const event = new Event("input", { bubbles: true });
-          inputField.dispatchEvent(event); // Trigger React's state update
-          console.log("Input text set successfully!");
-        } else {
-          console.error("Input field with ID 'transcription' not found!");
+          inputField.dispatchEvent(event);
+          console.log("Input text set successfully with value:", text);
         }
       };
 
-      // Unity function to trigger the submit
       (window as any).triggerSubmit = function () {
         const inputField = document.getElementById(
           "transcription",
         ) as HTMLInputElement;
-        if (inputField) {
-          const currentValue = inputRef.current || inputField.value;
-          console.log(`Current input value: ${currentValue}`);
-          
-          if (currentValue && currentValue.trim() !== "") {
-            console.log("Triggering submit with value:", currentValue);
-            // Ensure the React state is updated before submitting
-            setInput(currentValue);
-            setTimeout(() => {
-              onSubmit(); // Call onSubmit after a brief delay
-            }, 100);
-          } else {
-            console.warn("Cannot submit: Input field is empty.");
-          }
+        const currentValue = inputField?.value || inputRef.current;
+        
+        console.log("Triggering submit with current value:", currentValue);
+        
+        if (currentValue && currentValue.trim() !== "") {
+          // Pass the current value directly to onSubmit
+          onSubmit(currentValue);
+          console.log("Submit triggered with value:", currentValue);
         } else {
-          console.warn("Cannot submit: Input field not found.");
+          console.warn("Cannot submit: No valid input value found");
         }
       };
     }
 
-    // Cleanup function
     return () => {
       if (typeof window !== "undefined") {
         (window as any).setTranscriptionInput = undefined;
@@ -81,17 +69,16 @@ export default function InteractiveAvatarTextInput({
     };
   }, [setInput, onSubmit]);
 
-  // Handle the submission of the form
   function handleSubmit() {
-    if (!input || input.trim() === "") {
+    const currentValue = input || inputRef.current;
+    if (!currentValue || currentValue.trim() === "") {
       console.warn("Input is empty. Submission canceled.");
       return;
     }
-    console.log(`Submitting input: ${input}`);
-    onSubmit(); // Trigger the parent's submit handler
+    console.log(`Submitting input: ${currentValue}`);
+    onSubmit(currentValue);
   }
 
-  // Handle key press events
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
