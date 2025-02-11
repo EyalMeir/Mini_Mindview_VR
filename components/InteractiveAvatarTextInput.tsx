@@ -1,7 +1,7 @@
 import { Input, Spinner, Tooltip } from "@nextui-org/react";
 import { PaperPlaneRight } from "@phosphor-icons/react";
 import clsx from "clsx";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 interface StreamingAvatarTextInputProps {
   label: string;
@@ -24,6 +24,8 @@ export default function InteractiveAvatarTextInput({
   disabled = true,
   loading = false,
 }: StreamingAvatarTextInputProps) {
+  const inputRef = useRef<string>("");
+
   // Function to handle Unity's interaction
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -34,6 +36,7 @@ export default function InteractiveAvatarTextInput({
         ) as HTMLInputElement;
         if (inputField) {
           console.log(`Setting input text to: ${text}`);
+          inputRef.current = text; // Store the value in ref
           setInput(text); // Update React state
           inputField.value = text; // Update DOM input field value
           const event = new Event("input", { bubbles: true });
@@ -50,10 +53,16 @@ export default function InteractiveAvatarTextInput({
           "transcription",
         ) as HTMLInputElement;
         if (inputField) {
-          console.log(`Current input value: ${inputField.value}`);
-          if (inputField.value.trim() !== "") {
-            console.log("Triggering submit...");
-            onSubmit(); // Call onSubmit directly
+          const currentValue = inputRef.current || inputField.value;
+          console.log(`Current input value: ${currentValue}`);
+          
+          if (currentValue && currentValue.trim() !== "") {
+            console.log("Triggering submit with value:", currentValue);
+            // Ensure the React state is updated before submitting
+            setInput(currentValue);
+            setTimeout(() => {
+              onSubmit(); // Call onSubmit after a brief delay
+            }, 100);
           } else {
             console.warn("Cannot submit: Input field is empty.");
           }
@@ -74,13 +83,12 @@ export default function InteractiveAvatarTextInput({
 
   // Handle the submission of the form
   function handleSubmit() {
-    if (input.trim() === "") {
+    if (!input || input.trim() === "") {
       console.warn("Input is empty. Submission canceled.");
       return;
     }
     console.log(`Submitting input: ${input}`);
     onSubmit(); // Trigger the parent's submit handler
-    //setInput(""); // Clear the input after submission
   }
 
   // Handle key press events
@@ -128,7 +136,10 @@ export default function InteractiveAvatarTextInput({
       size="sm"
       value={input}
       onKeyDown={handleKeyDown}
-      onValueChange={setInput}
+      onValueChange={(value) => {
+        setInput(value);
+        inputRef.current = value;
+      }}
       isDisabled={disabled}
       classNames={{
         input: "min-h-unit-12",
