@@ -49,15 +49,28 @@ export default function InteractiveAvatarTextInput({
         const inputField = document.getElementById(
           "transcription",
         ) as HTMLInputElement;
-        if (inputField && inputField.value.trim() !== "") {
-          console.log("Triggering handleSubmit...");
-          handleSubmit(); // Call handleSubmit if the input is valid
+        if (inputField) {
+          console.log(`Current input value: ${inputField.value}`);
+          if (inputField.value.trim() !== "") {
+            console.log("Triggering submit...");
+            onSubmit(); // Call onSubmit directly
+          } else {
+            console.warn("Cannot submit: Input field is empty.");
+          }
         } else {
-          console.warn("Cannot submit: Input field is empty or not found.");
+          console.warn("Cannot submit: Input field not found.");
         }
       };
     }
-  }, [setInput, input]);
+
+    // Cleanup function
+    return () => {
+      if (typeof window !== "undefined") {
+        (window as any).setTranscriptionInput = undefined;
+        (window as any).triggerSubmit = undefined;
+      }
+    };
+  }, [setInput, onSubmit]);
 
   // Handle the submission of the form
   function handleSubmit() {
@@ -69,6 +82,14 @@ export default function InteractiveAvatarTextInput({
     onSubmit(); // Trigger the parent's submit handler
     //setInput(""); // Clear the input after submission
   }
+
+  // Handle key press events
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit();
+    }
+  };
 
   return (
     <Input
@@ -106,13 +127,13 @@ export default function InteractiveAvatarTextInput({
       placeholder={placeholder}
       size="sm"
       value={input}
-      onKeyDown={(e) => {
-        if (e.key === "Enter") {
-          handleSubmit();
-        }
-      }}
+      onKeyDown={handleKeyDown}
       onValueChange={setInput}
       isDisabled={disabled}
+      classNames={{
+        input: "min-h-unit-12",
+        inputWrapper: "min-h-unit-12",
+      }}
     />
   );
 }
